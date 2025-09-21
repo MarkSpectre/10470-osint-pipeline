@@ -1,0 +1,6 @@
+INSTAGRAM_KEY = "your_rapidapi_key"
+INSTGRAM_HOST = 'your_rapidapi_host"
+GITHUB_TOKEN = "your_official_token"
+
+get official api keys for discord, github,mastodon and reddit
+use rapid api for other platforms
