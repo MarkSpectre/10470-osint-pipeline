@@ -174,6 +174,7 @@ from utils.sentiment import add_sentiment
 from pathlib import Path
 import sqlite3
 from tabulate import tabulate
+from utils.sentiment import save_sentiment_chart
 
 # Set a reliable database path
 BASE_DIR = Path(__file__).parent
@@ -216,17 +217,17 @@ def print_db_records(table_name="social_media_posts", limit=10):
     finally:
         conn.close()
 
-def run_pipeline(total_records=100):
+def run_pipeline(total_records=750):
     data = []
 
     platforms = [
-        ("Twitter", fetch_twitter, ("AI", 10)),
-        ("Reddit", fetch_reddit, ("technology", 10)),
-        ("Facebook", fetch_facebook, ("cnn", 5)),
-        ("Instagram", fetch_instagram, ("gaming", 5)),
-        ("TikTok", fetch_tiktok, ("cybersecurity", 5)),
-        ("Mastodon", fetch_mastodon, ("ai", 5)),
-        ("GitHub", fetch_github, ("leak", 5)),
+        ("Twitter", fetch_twitter, ("AI", 100)),
+        ("Reddit", fetch_reddit, ("technology", 100)),
+        ("Facebook", fetch_facebook, ("cnn", 80)),
+        ("Instagram", fetch_instagram, ("gaming", 30)),
+        ("TikTok", fetch_tiktok, ("cybersecurity", 30)),
+        ("Mastodon", fetch_mastodon, ("ai", 80)),
+        ("GitHub", fetch_github, ("leak", 60)),
         ("Snapchat", fetch_snapchat, ("mrbeast",))
     ]
 
@@ -261,6 +262,7 @@ def run_pipeline(total_records=100):
 
     # Add sentiment
     data = add_sentiment(data)
+    save_sentiment_chart(data, output_dir="screenshots", filename="sentiment_chart.png")
 
     # Save to DB
     save_to_db(data, DB_PATH)
