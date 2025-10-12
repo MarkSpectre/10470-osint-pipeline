@@ -1,0 +1,102 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="container">
+    <div class="card">
+        <h2 style="color: var(--accent-primary);">Search by Profile Picture</h2>
+        <p style="color: var(--text-secondary);">Upload an image to find similar profile pictures across collected user profiles.</p>
+        <form id="image-search-form" method="post" enctype="multipart/form-data" style="margin-top: 1rem; display:flex; gap:0.5rem; align-items:center;">
+            <label for="search-image-upload" 
+                style="
+                    display: inline-flex;
+                    align-items: center;
+                    gap: 0.5rem;
+                    background: linear-gradient(45deg, var(--accent-primary), var(--accent-secondary));
+                    color: var(--bg-primary);
+                    padding: 0.5rem 1rem;
+                    border-radius: 8px;
+                    cursor: pointer;
+                    font-weight: 500;
+                "
+            >
+                <i class="fas fa-upload"></i> Choose Image
+            </label>
+            <input id="search-image-upload" type="file" name="image" accept="image/*" required style="display:none;" />
+            <span id="search-file-name" style="color:var(--text-secondary); font-size:0.95rem;">No file chosen</span>
+            <button class="btn" type="submit">Search</button>
+        </form>
+        <p style="color:var(--text-secondary); margin-top:0.5rem; font-size:0.9rem;">Distance indicates the Hamming distance between perceptual hashes (pHash). Smaller numbers mean more visually similar images (0 = identical). Default threshold = 10.</p>
+    </div>
+
+    {% if matches_posts is not none %}
+    <div style="margin-top: 1rem;">
+        <h3 style="color: var(--accent-secondary);">Found {{ query_count }} matching user(s)</h3>
+
+        {% if matches_posts %}
+            {% for group in matches_posts %}
+            <div class="card" style="margin-top: 1rem;">
+                <div style="display:flex; align-items:center; gap:1rem;">
+                    <img src="{{ group.match.profile_pic }}" alt="profile" style="width:64px;height:64px;border-radius:50%;border:2px solid var(--accent-primary);">
+                    <div>
+                        <div style="font-weight:600; color:var(--accent-primary);">{{ group.match.name or group.match.username }}</div>
+                        <div style="color:var(--text-secondary);">@{{ group.match.username }} • {{ group.match.platform }}</div>
+                    </div>
+                    <div style="margin-left:auto; color:var(--text-secondary);">Distance: {{ group.match.distance }}</div>
+                </div>
+
+                <!-- User's posts -->
+                {% if group.posts %}
+                <div style="display:grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap:1rem; margin-top:1rem;">
+                    {% for post in group.posts %}
+                    <div class="card" style="border:1px solid rgba(0,255,157,0.06);">
+                        <div style="display:flex; gap:0.75rem; align-items:center; margin-bottom:0.5rem;">
+                            <img src="{{ post.profile_pic }}" alt="pic" style="width:44px;height:44px;border-radius:50%;border:2px solid var(--accent-primary);">
+                            <div>
+                                <div style="font-weight:600; color:var(--accent-primary);">{{ post.name or post.user }}</div>
+                                <div style="font-size:0.85em; color:var(--text-secondary);">@{{ post.username }} • {{ post.platform }}</div>
+                            </div>
+                        </div>
+                        <p style="color:var(--text-primary);">{{ post.text[:300] }}{% if post.text|length > 300 %}...{% endif %}</p>
+                        <div style="display:flex; justify-content:space-between; align-items:center; margin-top:0.75rem;">
+                            <div style="color:var(--text-secondary); font-size:0.85em;">{{ post.timestamp }}</div>
+                            {% if post.url %}
+                            <a href="{{ post.url }}" target="_blank" class="btn">View</a>
+                            {% endif %}
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+                {% else %}
+                    <p style="color:var(--text-secondary); margin-top:1rem;">No posts found for this user.</p>
+                {% endif %}
+            </div>
+            {% endfor %}
+        {% else %}
+            <div class="card"><p style="color:var(--text-secondary);">No visually similar profile pictures found.</p></div>
+        {% endif %}
+    </div>
+    {% endif %}
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+document.addEventListener('DOMContentLoaded', function(){
+    const input = document.getElementById('search-image-upload');
+    const label = document.getElementById('search-file-name');
+    const chooseBtn = document.querySelector('label[for="search-image-upload"]');
+    if(input && label){
+        if(chooseBtn){
+            chooseBtn.addEventListener('click', function(e){
+                e.preventDefault();
+                input.click();
+            });
+        }
+
+        input.addEventListener('change', function(){
+            const f = input.files && input.files[0];
+            label.textContent = f ? f.name : 'No file chosen';
+        });
+    }
+});
+</script>
+{% endblock %}

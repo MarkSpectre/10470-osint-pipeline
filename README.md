@@ -5,17 +5,56 @@ A comprehensive Open Source Intelligence (OSINT) pipeline for collecting, proces
 
 # **📋 Table of Contents**
 
-Overview
+- [Overview](#overview)
+- [Features](#features)
+- [API Keys Setup](#api-keys-setup)
+- [Installation](#installation)
+- [Configuration](#configuration)
+- [Usage](#usage)
+- [Troubleshooting](#troubleshooting)
 
-Features
+# **🔑 API Keys Setup**
 
-Supported Platforms
+To use all features of the OSINT pipeline, you'll need to set up the following API keys:
 
-Installation
+1. **RapidAPI Key** (Required)
+   - Used for: Twitter, Instagram, TikTok, Facebook
+   - Get it from: [RapidAPI](https://rapidapi.com/)
+   - Set as: `RAPIDAPI_KEY` in .env
 
-Configuration
+2. **GitHub Personal Access Token**
+   - Used for: GitHub data collection
+   - Get it from: [GitHub Developer Settings](https://github.com/settings/tokens)
+   - Set as: `GITHUB_TOKEN` in .env
 
-Usage
+3. **Twitter Bearer Token**
+   - Used for: Twitter API v2 (fallback)
+   - Get it from: [Twitter Developer Portal](https://developer.twitter.com/)
+   - Set as: `TWITTER_BEARER_TOKEN` in .env
+
+4. **Reddit API Credentials**
+   - Used for: Reddit data collection
+   - Get it from: [Reddit App Preferences](https://www.reddit.com/prefs/apps)
+   - Set as: `REDDIT_CLIENT_ID` and `REDDIT_CLIENT_SECRET` in .env
+
+5. **Mastodon Access Token**
+   - Used for: Mastodon instance access
+   - Get it from your Mastodon instance
+   - Set as: `MASTODON_ACCESS_TOKEN` in .env
+
+Create a `.env` file in the root directory with your API keys:
+
+```env
+# RapidAPI (Required)
+RAPIDAPI_KEY="your_rapidapi_key_here"
+
+# Platform-specific APIs
+GITHUB_TOKEN="your_github_token_here"
+TWITTER_BEARER_TOKEN="your_twitter_bearer_token_here"
+REDDIT_CLIENT_ID="your_reddit_client_id_here"
+REDDIT_CLIENT_SECRET="your_reddit_secret_here"
+MASTODON_ACCESS_TOKEN="your_mastodon_token_here"
+```
 
 
 # **🌟 Overview**
@@ -25,19 +64,40 @@ The OSINT Social Media Pipeline is designed for researchers, analysts, and secur
 
 # **✨ Features**
 
-Multi-Platform Support: Collect data from 10+ social media platforms
+- **Multi-Platform Data Collection**
+  - Seamless integration with 10+ social media platforms
+  - Unified data collection interface
+  - Rate limit handling and API fallbacks
 
-Data Cleaning: Automatic URL removal, symbol cleaning, and text normalization
+- **Advanced Data Processing**
+  - Automatic URL removal and text normalization
+  - Language detection and filtering
+  - Sentiment analysis with TextBlob
+  - User data enrichment from multiple sources
 
-Language Filtering: Filter content by language (English by default)
+- **Modern Web Interface**
+  - Dark theme with neon accents
+  - Real-time data visualization
+  - Interactive dashboards
+  - Responsive design for all devices
 
-Sentiment Analysis: Automated sentiment scoring using TextBlob
+- **Robust Architecture**
+  - SQLite database for persistent storage
+  - Comprehensive error handling
+  - Extensible collector system
+  - API key management and validation
 
-Database Storage: SQLite database integration for persistent storage
+- **Data Analysis**
+  - Cross-platform user tracking
+  - Sentiment visualization
+  - Platform usage statistics
+  - Content trend analysis
 
-Error Handling: Robust error handling and fallback mechanisms
-
-Extensible Architecture: Easy to add new data sources and processing steps
+- **User Experience**
+  - Advanced search capabilities
+  - Platform-specific filtering
+  - Data export options
+  - Real-time updates
 
 
 # **📱 Supported Platforms**

@@ -1,0 +1,154 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="container">
+    <!-- Statistics Cards -->
+    <div class="card" style="background: linear-gradient(45deg, var(--bg-secondary), #1a1a1a);">
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem;">
+            <div style="text-align: center;">
+                <i class="fas fa-globe platform-icon" style="font-size: 2em; color: var(--accent-primary);"></i>
+                <h3 style="color: var(--accent-primary);">Platforms</h3>
+                <p style="font-size: 1.5em;">{{ platforms|length }}</p>
+            </div>
+            <div style="text-align: center;">
+                <i class="fas fa-comments platform-icon" style="font-size: 2em; color: var(--accent-secondary);"></i>
+                <h3 style="color: var(--accent-secondary);">Posts</h3>
+                <p style="font-size: 1.5em;">{{ posts|length }}</p>
+            </div>
+            <div style="text-align: center;">
+                <i class="fas fa-users platform-icon" style="font-size: 2em; color: #ff00ff;"></i>
+                <h3 style="color: #ff00ff;">Users</h3>
+                <p style="font-size: 1.5em;">{{ unique_users }}</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Visualization Section -->
+    <div class="chart-container">
+        <img src="{{ url_for('static', filename='charts/platform_stats.png') }}" alt="Platform Statistics" style="width: 100%; height: auto;">
+    </div>
+
+    <!-- Advanced Image Search -->
+    <div class="card" style="margin-top: 1rem; display:flex; gap:1rem; align-items:center;">
+        <div style="flex:1">
+            <h3 style="color: var(--accent-secondary);">Search by Profile Image</h3>
+            <p style="color: var(--text-secondary);">Upload an image to find similar profile pictures across collected users.</p>
+        </div>
+       <form id="home-image-search" method="post" action="{{ url_for('search_by_image') }}" enctype="multipart/form-data" 
+      style="display:flex; gap:0.5rem; align-items:center;">
+    <label for="image-upload" 
+        style="
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            background: linear-gradient(45deg, var(--accent-primary), var(--accent-secondary));
+            color: var(--bg-primary);
+            padding: 0.5rem 1rem;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 500;
+            transition: transform 0.2s ease, opacity 0.2s ease;
+        "
+        onmouseover="this.style.opacity='0.9'"
+        onmouseout="this.style.opacity='1'"
+    >
+        <i class="fas fa-upload"></i> Choose Image
+    </label>
+    <input id="image-upload" type="file" name="image" accept="image/*" required style="display: none;" />
+    <span id="home-file-name" style="color:var(--text-secondary); font-size:0.9rem;">No file chosen</span>
+    <button class="btn" type="submit">Search</button>
+</form>
+
+    </div>
+
+    <!-- Posts Grid -->
+    <h2 style="color: var(--accent-primary); font-size: 1.5em; margin: 2rem 0;">Recent Social Media Activity</h2>
+    
+    {% if posts %}
+    <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 1rem;">
+        {% for post in posts %}
+        <div class="card" style="border: 1px solid rgba(0, 255, 157, 0.1);">
+            <!-- Post Header -->
+            <div style="display: flex; align-items: center; margin-bottom: 1rem;">
+                {% if post.profile_pic %}
+                <img src="{{ post.profile_pic }}" alt="Profile" 
+                     style="width: 48px; height: 48px; border-radius: 50%; margin-right: 1rem; border: 2px solid var(--accent-primary);">
+                {% else %}
+                <div style="width: 48px; height: 48px; border-radius: 50%; margin-right: 1rem; 
+                            background: linear-gradient(45deg, var(--accent-primary), var(--accent-secondary)); 
+                            display: flex; align-items: center; justify-content: center;">
+                    <span style="color: var(--bg-primary); font-weight: bold;">
+                        {{ post.username[0]|upper if post.username else '?' }}
+                    </span>
+                </div>
+                {% endif %}
+                
+                <div>
+                    <p style="font-weight: 500; color: var(--accent-primary);">{{ post.name or post.user }}</p>
+                    <p style="font-size: 0.875em; color: var(--text-secondary);">@{{ post.username }}</p>
+                </div>
+                
+                <!-- Platform Icon -->
+                <div style="margin-left: auto;">
+                    <i class="fab fa-{{ post.platform.lower() }} platform-icon {{ post.platform.lower() }}"></i>
+                </div>
+            </div>
+
+            <!-- Post Content -->
+            <p style="color: var(--text-primary); margin-bottom: 1rem;">{{ post.text[:150] }}...</p>
+
+            <!-- Post Footer -->
+            <div style="display: flex; justify-content: space-between; align-items: center;">
+                <span style="font-size: 0.875em; color: var(--text-secondary);">
+                    {% if post.sentiment %}
+                        Sentiment: 
+                        {% if post.sentiment > 0.2 %}
+                            <span style="color: var(--success);">Positive</span>
+                        {% elif post.sentiment < -0.2 %}
+                            <span style="color: var(--error);">Negative</span>
+                        {% else %}
+                            <span style="color: var(--warning);">Neutral</span>
+                        {% endif %}
+                    {% endif %}
+                </span>
+
+                {% if post.url %}
+                <a href="{{ post.url }}" target="_blank" class="btn" style="font-size: 0.875em;">
+                    View Post <i class="fas fa-external-link-alt"></i>
+                </a>
+                {% endif %}
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    {% else %}
+    <div class="card" style="text-align: center;">
+        <i class="fas fa-inbox" style="font-size: 3em; color: var(--text-secondary); margin-bottom: 1rem;"></i>
+        <p style="color: var(--text-secondary);">No posts available yet.</p>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+document.addEventListener('DOMContentLoaded', function(){
+    const input = document.getElementById('image-upload');
+    const label = document.getElementById('home-file-name');
+    const chooseBtn = document.querySelector('label[for="image-upload"]');
+    if(input && label){
+        // clicking the styled label should open the file dialog
+        if(chooseBtn){
+            chooseBtn.addEventListener('click', function(e){
+                e.preventDefault();
+                input.click();
+            });
+        }
+
+        input.addEventListener('change', function(e){
+            const f = input.files && input.files[0];
+            label.textContent = f ? f.name : 'No file chosen';
+        });
+    }
+});
+</script>
+{% endblock %}

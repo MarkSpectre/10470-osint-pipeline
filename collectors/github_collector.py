@@ -5,43 +5,51 @@ from dotenv import load_dotenv
 load_dotenv()
 GITHUB_TOKEN = os.getenv("GITHUB_TOKEN")
 
-def fetch_github(query="leak", limit=5):
+def fetch_github(query="AI", limit=5):
+    """Search GitHub repositories for the query and return repo entries as posts.
+
+    This returns repository name + description as the `text` so the pipeline
+    treats them as posts (instead of only returning user profiles with empty bios).
     """
-    Fetch GitHub repositories using GitHub REST API
-    """
+    headers = {"Accept": "application/vnd.github.v3+json"}
+    if GITHUB_TOKEN:
+        headers["Authorization"] = f"token {GITHUB_TOKEN}"
+
     try:
-        headers = {
-            'Accept': 'application/vnd.github.v3+json'
-        }
-        
-        # Add authorization if token is available
-        if GITHUB_TOKEN:
-            headers['Authorization'] = f'token {GITHUB_TOKEN}'
-        
-        # Search repositories
-        url = f"https://api.github.com/search/repositories?q={query}&sort=updated&order=desc"
-        
-        response = requests.get(url, headers=headers, timeout=10)
-        
-        if response.status_code != 200:
-            print(f"GitHub API Error: HTTP {response.status_code}")
-            return []
-        
-        data = response.json()
+        # Search repositories (more likely to produce usable 'text' fields)
+        res = requests.get(
+            f"https://api.github.com/search/repositories",
+            headers=headers,
+            params={"q": query, "per_page": limit},
+            timeout=10
+        )
+        res.raise_for_status()
+        data = res.json()
+
         results = []
-        
-        # Extract repositories from the response
-        for repo in data.get('items', [])[:limit]:
+        for repo in data.get("items", [])[:limit]:
+            owner = repo.get("owner", {}) or {}
+            owner_login = owner.get("login", "")
+            avatar = owner.get("avatar_url", "")
+            repo_name = repo.get("name", "")
+            repo_desc = repo.get("description") or ""
+            html_url = repo.get("html_url", "")
+            created_at = repo.get("created_at") or repo.get("updated_at") or ""
+
             results.append({
                 "platform": "github",
-                "user": repo['owner']['login'],
-                "timestamp": repo['created_at'],
-                "text": f"{repo['name']}: {repo['description']}" if repo['description'] else repo['name'],
-                "url": repo['html_url']
+                "user": owner_login,
+                "username": owner_login,
+                "name": repo_name,
+                "email": "",
+                "profile_pic": avatar,
+                "timestamp": created_at,
+                "text": repo_desc,
+                "url": html_url
             })
-            
+
         return results
-        
-    except requests.exceptions.RequestException as e:
-        print(f"Error fetching GitHub data: {e}")
+
+    except Exception as e:
+        print(f"GitHub error: {e}")
         return []

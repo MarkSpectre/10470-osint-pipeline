@@ -36,19 +36,32 @@ def fetch_tiktok(keyword="cybersecurity", limit=5):
         results = []
         
         for item in items:
-            author_id = item.get("author", {}).get("uniqueId", "unknown")
-            video_id = item.get("id", "")
+            author = item.get("author", {})
             video_data = item.get("video", {})
-            
+
+            # Extract user info safely
+            username = author.get("uniqueId", "unknown")
+            name = author.get("nickname", "Unknown User")
+            profile_pic = (
+                author.get("avatarLarger")
+                or author.get("avatarMedium")
+                or author.get("avatarThumb")
+                or ""
+            )
+
             results.append({
                 "platform": "tiktok",
-                "user": author_id,
+                "user": username,
+                "username": username,
+                "name": name,
+                "email": "",  # TikTok API doesn't provide email
+                "profile_pic": profile_pic,
                 "timestamp": item.get("createTime", "N/A"),
                 "text": item.get("desc", ""),
-                "url": f"https://www.tiktok.com/@{author_id}/video/{video_id}",
-                "cover": video_data.get("cover") or "N/A",
-                "play_url": video_data.get("playAddr") or "N/A",
-                "download_url": video_data.get("downloadAddr") or "N/A"
+                "url": f"https://www.tiktok.com/@{username}/video/{item.get('id', '')}",
+                "cover": video_data.get("cover", "N/A"),
+                "play_url": video_data.get("playAddr", "N/A"),
+                "download_url": video_data.get("downloadAddr", "N/A")
             })
         
         return results

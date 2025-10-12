@@ -1,59 +1,97 @@
 import os
 import requests
 from dotenv import load_dotenv
-
 load_dotenv()
-TWITTERAPI_IO_KEY = os.getenv("TWITTER_IO_KEY")
+
+RAPIDAPI_KEY = os.getenv("TWITTER_KEY")  # Using the common RAPIDAPI_KEY
+TWITTER_BEARER = os.getenv("TWITTER_BEARER_TOKEN")
 
 def fetch_twitter(query="AI", limit=10):
     """
-    Fetch Twitter data using twitterapi.io service
+    Fetch tweets from Twitter using RapidAPI or official API
+    Returns list of tweets with user info
     """
-    if not TWITTERAPI_IO_KEY:
-        print("Error: TWITTERAPI_IO_KEY not found in environment variables")
+    if not (RAPIDAPI_KEY or TWITTER_BEARER):
+        print("⚠️ Twitter: No API keys found. Check RAPIDAPI_KEY or TWITTER_BEARER_TOKEN in .env")
         return []
-    
-    url = "https://api.twitterapi.io/twitter/community/get_tweets_from_all_community"
-    
-    params = {
-        "query": query,
-        "queryType" :"Latest",
-        "cursor": ""
-    }
-    
-    headers = {
-        "x-api-key": TWITTERAPI_IO_KEY,   # ✅ Correct header
-        "Content-Type": "application/json"
-    }
-    
+
+    # Try RapidAPI first
+    if RAPIDAPI_KEY:
+        url = "https://twitter154.p.rapidapi.com/search"
+        headers = {
+            "X-RapidAPI-Key": RAPIDAPI_KEY,
+            "X-RapidAPI-Host": "twitter154.p.rapidapi.com"
+        }
+        params = {"query": query, "limit": str(limit)}
+    else:
+        # Fallback to official API
+        url = "https://api.twitter.com/2/tweets/search/recent"
+        headers = {"Authorization": f"Bearer {TWITTER_BEARER}"}
+        params = {"query": query, "max_results": limit}
+
     try:
-        response = requests.get(url, headers=headers, params=params, timeout=30)
+        resp = requests.get(url, headers=headers, params=params, timeout=30)
         
-        if response.status_code != 200:
-            print(f"Twitter API Error: HTTP {response.status_code} - {response.text[:200]}")
+        if resp.status_code == 429:
+            print("⚠️ Twitter: Rate limit exceeded. Try again later.")
+            return []
+        elif resp.status_code == 403:
+            print("⚠️ Twitter: Authentication failed. Check your API keys.")
             return []
         
-        data = response.json()
-        
+        resp.raise_for_status()
+        j = resp.json()
+
         results = []
-        tweets = data.get("statuses", [])[:limit] or data.get("data", [])[:limit] or data.get("tweets", [])[:limit]
-        
-        for tweet in tweets:
-            text = tweet.get("text") or tweet.get("full_text") or ""
-            user = tweet.get("user", {}).get("screen_name", "") if isinstance(tweet.get("user"), dict) else tweet.get("screen_name", "")
-            timestamp = tweet.get("created_at", "")
-            tweet_id = tweet.get("id_str", "") or str(tweet.get("id", ""))
-            
+
+        # The twitter241 API returns nested structure under "result" → "timeline" → "instructions"
+        entries = []
+        try:
+            entries = j["result"]["timeline"]["instructions"][0]["entries"]
+        except (KeyError, TypeError, IndexError):
+            # fallback in case structure differs
+            entries = j.get("data") or j.get("statuses") or j.get("tweets") or []
+
+        for entry in entries:
+            try:
+                tweet_result = (
+                    entry["content"]["itemContent"]["tweet_results"]["result"]["legacy"]
+                )
+                user_result = (
+                    entry["content"]["itemContent"]["tweet_results"]["result"]["core"]["user_results"]["result"]["legacy"]
+                )
+            except (KeyError, TypeError):
+                # Skip invalid entries
+                continue
+
+            # ✅ Extract user details
+            username = user_result.get("screen_name", "")
+            name = user_result.get("name", "")
+            profile_pic = (
+                user_result.get("profile_image_url_https", "") or
+                user_result.get("profile_image_url", "")
+            )
+
+            # ✅ Extract post details
+            text = tweet_result.get("full_text", "")
+            timestamp = tweet_result.get("created_at", "")
+            tweet_id = tweet_result.get("id_str", "")
+
             results.append({
                 "platform": "twitter",
-                "user": user,
+                "username": username,
+                "name": name,
+                "profile_pic": profile_pic,
                 "timestamp": timestamp,
                 "text": text,
-                "url": f"https://twitter.com/user/status/{tweet_id}" if tweet_id else ""
+                "url": f"https://twitter.com/{username}/status/{tweet_id}"
             })
-        
+
         return results
-        
-    except requests.exceptions.RequestException as e:
-        print(f"Twitter API Request Error: {e}")
+
+    except requests.exceptions.HTTPError as e:
+        print("Twitter241 HTTPError:", resp.status_code, resp.text)
+        return []
+    except Exception as e:
+        print("Twitter241 error:", e)
         return []
