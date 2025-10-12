@@ -1,0 +1,17 @@
+Flask
+requests
+python-dotenv
+Pillow
+imagehash
+aiohttp
+seaborn
+matplotlib
+pandas
+textblob
+langdetect
+nltk
+praw
+Mastodon.py
+tabulate
+seaborn
+tqdm
